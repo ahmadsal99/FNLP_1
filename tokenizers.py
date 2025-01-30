@@ -1,5 +1,3 @@
-#Test comment
-
 from collections import defaultdict
 import re
 import jsonlines
@@ -90,7 +88,17 @@ class NgramTokenizer(Tokenizer):
         Input: "This movie was really bad, but bad in a fun way, so I loved it."
         Output: [16999, 51610, 39000, 44191, 89954, 14539, 50931]
         """
-        raise Exception("TODO: Implement this method")
+        # raise Exception("TODO: Implement this method")
+        split_text = convert_text_to_words(text)
+        tokenized_text = [tuple(split_text[i:i+self.n]) for i in range(0, len(split_text)-self.n+1)]
+        tokenized_text = [token for token in tokenized_text if token in self.token_to_id]
+        if return_token_ids:
+            token_ids = []
+            for token in tokenized_text:
+                token_ids.append(self.token_to_id[token])
+            return token_ids
+        else:
+            return tokenized_text
 
     def train(self, corpus: List[str]):
         """
@@ -111,13 +119,29 @@ class NgramTokenizer(Tokenizer):
         set self.token_to_id: {"This": 0, "movie": 1, "was": 2, "good": 3, "bad": 4}
         set self.id_to_token: {0: "This", 1: "movie", 2: "was", 3: "good", 4: "bad"}
         """
-        raise Exception("TODO: Implement this method")
+        # raise Exception("TODO: Implement this method")
+        token_counts = {}
+        for text in corpus:
+            split_text = convert_text_to_words(text)
+            tokenized_text = [tuple(split_text[i:i + self.n]) for i in range(0, len(split_text) - self.n + 1)]
+            for token in tokenized_text:
+                if token not in token_counts:
+                    token_counts[token] = 0
+                token_counts[token] += 1
+        tokens_sorted = sorted(token_counts, key=lambda x: token_counts[x], reverse=True)
+        if self.vocab_size == -1:
+            self.token_to_id = dict(zip(tokens_sorted, range(len(tokens_sorted))))
+            self.id_to_token = dict(zip(range(len(tokens_sorted)), tokens_sorted))
+        else:
+            self.token_to_id = dict(zip(tokens_sorted[:self.vocab_size], range(self.vocab_size)))
+            self.id_to_token = dict(zip(range(self.vocab_size), tokens_sorted[:self.vocab_size]))
 
     def __len__(self):
         """
         TODO: Return the number of tokens in the vocabulary.
         """
-        raise Exception("TODO: Implement this method")
+        # raise Exception("TODO: Implement this method")
+        return len(self.token_to_id)
 
 if __name__ == "__main__":
     with jsonlines.open("data/imdb_train.txt", "r") as reader:
